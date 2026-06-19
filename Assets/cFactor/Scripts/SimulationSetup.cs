@@ -9,7 +9,11 @@ public class SimulationSetup : MonoBehaviour
     const float SunRadius = 1.5f;
     const float PlanetRadius = 0.35f;
     const float OrbitRadius = 8f;
-    const float OrbitalSpeed = 0.32f;
+
+    // Masas y G en unidades internas (μ = G·M = 1 → órbita estable y predecible).
+    const float StarMass = 1f;
+    const float PlanetMass = 1f;
+    const float GravitationalConstant = 1f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void AutoCreate()
@@ -59,9 +63,15 @@ public class SimulationSetup : MonoBehaviour
         renderer.sharedMaterial = LoadMaterial("Planet", new Color(0.22f, 0.52f, 0.92f), emission: false);
 
         var orbit = planetObject.AddComponent<NewtonianOrbit>();
+        orbit.Configure(StarMass, PlanetMass, GravitationalConstant);
+
+        float mu = GravitationalConstant * StarMass;
+        float orbitalSpeed = NewtonianOrbit.CircularOrbitalSpeed(OrbitRadius, mu);
+
+        // Posición en +X, velocidad tangencial en +Z → órbita circular en el plano XZ.
         orbit.Initialize(
             planetObject.transform.position,
-            new Vector3(0f, 0f, OrbitalSpeed));
+            new Vector3(0f, 0f, orbitalSpeed));
 
         var trail = planetObject.AddComponent<TrailRenderer>();
         trail.time = 120f;
