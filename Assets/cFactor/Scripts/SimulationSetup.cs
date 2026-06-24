@@ -29,6 +29,19 @@ public class SimulationSetup : MonoBehaviour
     {
         EnsureSun();
         EnsurePlanet();
+        EnsureFreeFlyCamera();
+    }
+
+    void EnsureFreeFlyCamera()
+    {
+        var camera = Camera.main;
+        if (camera == null)
+            return;
+
+        if (camera.GetComponent<FreeFlyCamera>() != null)
+            return;
+
+        camera.gameObject.AddComponent<FreeFlyCamera>();
     }
 
     void EnsureSun()
