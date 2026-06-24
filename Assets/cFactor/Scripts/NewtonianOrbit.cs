@@ -26,12 +26,27 @@ public class NewtonianOrbit : MonoBehaviour
 
     public Vector3 Position => position;
     public Vector3 Velocity => velocity;
+    public float CentralMass => centralMass;
+    public float PlanetMass => planetMass;
+    public float TimeScale
+    {
+        get => timeScale;
+        set => timeScale = Mathf.Max(0.1f, value);
+    }
+
+    public float DistanceToStar => (position - centralPosition).magnitude;
+    public float Speed => velocity.magnitude;
 
     public void Configure(float starMass, float bodyMass, float gravConstant)
     {
         centralMass = starMass;
         planetMass = bodyMass;
         gravitationalConstant = gravConstant;
+    }
+
+    public void SetCentralMass(float starMass)
+    {
+        centralMass = Mathf.Max(0.01f, starMass);
     }
 
     public void Initialize(Vector3 startPosition, Vector3 startVelocity)
@@ -42,10 +57,61 @@ public class NewtonianOrbit : MonoBehaviour
         initialized = true;
     }
 
+    /// <summary>Reinicia la órbita en el plano XZ con distancia y velocidad tangencial dadas.</summary>
+    public void ResetOrbit(float orbitRadius, float tangentialSpeed)
+    {
+        position = centralPosition + new Vector3(orbitRadius, 0f, 0f);
+        velocity = new Vector3(0f, 0f, tangentialSpeed);
+        transform.position = position;
+        initialized = true;
+        ClearTrail();
+    }
+
+    public void ClearTrail()
+    {
+        var trail = GetComponent<TrailRenderer>();
+        if (trail != null)
+            trail.Clear();
+    }
+
     /// <summary>Velocidad tangencial para una órbita circular a la distancia dada.</summary>
     public static float CircularOrbitalSpeed(float distance, float gravitationalParameter)
     {
+        if (distance <= 0f || gravitationalParameter <= 0f)
+            return 0f;
+
         return Mathf.Sqrt(gravitationalParameter / distance);
+    }
+
+    public static float EscapeSpeed(float distance, float gravitationalParameter)
+    {
+        if (distance <= 0f || gravitationalParameter <= 0f)
+            return 0f;
+
+        return Mathf.Sqrt(2f * gravitationalParameter / distance);
+    }
+
+    /// <summary>Energía específica ε = v²/2 − μ/r (por unidad de masa).</summary>
+    public static float SpecificOrbitalEnergy(float speed, float distance, float gravitationalParameter)
+    {
+        return 0.5f * speed * speed - gravitationalParameter / distance;
+    }
+
+    public static string ClassifyOrbit(float speed, float distance, float gravitationalParameter)
+    {
+        if (distance <= 0f || gravitationalParameter <= 0f)
+            return "—";
+
+        float circular = CircularOrbitalSpeed(distance, gravitationalParameter);
+        float escape = EscapeSpeed(distance, gravitationalParameter);
+
+        if (Mathf.Approximately(speed, circular))
+            return "Circular";
+        if (speed < escape)
+            return "Elíptica (ligada)";
+        if (Mathf.Approximately(speed, escape))
+            return "Parabólica (escape)";
+        return "Hiperbólica (escape)";
     }
 
     void Start()
@@ -57,9 +123,7 @@ public class NewtonianOrbit : MonoBehaviour
             initialized = true;
         }
 
-        var trail = GetComponent<TrailRenderer>();
-        if (trail != null)
-            trail.Clear();
+        ClearTrail();
     }
 
     void FixedUpdate()

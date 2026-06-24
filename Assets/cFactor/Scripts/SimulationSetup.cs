@@ -30,6 +30,16 @@ public class SimulationSetup : MonoBehaviour
         EnsureSun();
         EnsurePlanet();
         EnsureFreeFlyCamera();
+        EnsureParametersUI();
+    }
+
+    void EnsureParametersUI()
+    {
+        if (FindAnyObjectByType<SimulationParametersUI>() != null)
+            return;
+
+        var uiObject = new GameObject("SimulationUI");
+        uiObject.AddComponent<SimulationParametersUI>();
     }
 
     void EnsureFreeFlyCamera()
